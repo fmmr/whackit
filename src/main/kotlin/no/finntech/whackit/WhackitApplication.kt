@@ -8,8 +8,9 @@ import org.springframework.boot.runApplication
 class WhackitApplication
 
 fun main(args: Array<String>) {
-	GpioFactory.setDefaultProvider(RaspiGpioProvider(RaspiPinNumberingScheme.BROADCOM_PIN_NUMBERING))
+	GpioFactory.setDefaultProvider(RaspiGpioProvider(RaspiPinNumberingScheme.DEFAULT_PIN_NUMBERING))
 	val  gpio = GpioFactory.getInstance()
-	gpio.provisionDigitalOutputPin(RaspiBcmPin.GPIO_21, "MyLED", PinState.HIGH);
+	val myLED = gpio.provisionDigitalOutputPin(RaspiBcmPin.GPIO_29, "MyLED", PinState.LOW);
+	myLED.blink(300)
 	runApplication<WhackitApplication>(*args)
 }
