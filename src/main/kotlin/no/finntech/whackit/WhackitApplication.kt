@@ -2,10 +2,10 @@ package no.finntech.whackit
 
 import com.pi4j.io.gpio.*
 import com.pi4j.io.gpio.RaspiPin.*
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.runApplication
 import com.pi4j.io.gpio.event.GpioPinListenerDigital
 import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.runApplication
 
 
 @SpringBootApplication
@@ -24,7 +24,6 @@ fun main(args: Array<String>) {
     GpioFactory.setDefaultProvider(RaspiGpioProvider(RaspiPinNumberingScheme.DEFAULT_PIN_NUMBERING))
     setupLedAndSingleButton()
 
-
     listOf(pin24, pin25).forEach {
         it.addListener(GpioPinListenerDigital { event ->
             // display pin state on console
@@ -34,12 +33,6 @@ fun main(args: Array<String>) {
         })
     }
 
-//    while (true) {
-//        findButton()
-//    }
-
-
-//    initButtons()
     runApplication<WhackitApplication>(*args)
 }
 
@@ -47,12 +40,23 @@ private fun findButton(provisionedPin: GpioPinDigitalInput) {
     listOf(pin28, pin23).forEach {
         it.state = PinState.LOW
         if (provisionedPin.state.isHigh) {
-            LOG.info("BUTTON PRESSED UPPER LEFT")  // XXX which button is derived from which pin28/23 and which provisionedPin 24/25 is "here"
+            val button = findbutton(it, provisionedPin)
+            LOG.info("BUTTON PRESSED $button")
             while (provisionedPin.state.isHigh) {
                 // do nothing
             }
         }
         it.state = PinState.HIGH
+    }
+}
+
+fun findbutton(row: GpioPin, col: GpioPin): String {
+    return when {
+        row == pin28 && col == pin24 -> "UPPER LEFT"
+        row == pin28 && col == pin25 -> "LOWER LEFT"
+        row == pin23 && col == pin24 -> "UPPER RIGHT"
+        row == pin23 && col == pin25 -> "LOWER RIGHT"
+        else -> "UNKNOWN"
     }
 }
 
