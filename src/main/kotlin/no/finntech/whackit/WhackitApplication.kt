@@ -15,11 +15,15 @@ val gpio = GpioFactory.getInstance()
 val LOG = LoggerFactory.getLogger("MAIN");
 val BUTTON_ARRAY = listOf(GPIO_28, GPIO_23, GPIO_24, GPIO_25)
 
+val pin28 = gpio.provisionDigitalMultipurposePin(GPIO_28, "BUTTON_28", PinMode.DIGITAL_OUTPUT)
+val pin23 = gpio.provisionDigitalMultipurposePin(GPIO_23, "BUTTON_23", PinMode.DIGITAL_OUTPUT)
+val pin24 = gpio.provisionDigitalMultipurposePin(GPIO_24, "BUTTON_24", PinMode.DIGITAL_INPUT, PinPullResistance.PULL_UP)
+val pin25 = gpio.provisionDigitalMultipurposePin(GPIO_25, "BUTTON_25", PinMode.DIGITAL_INPUT, PinPullResistance.PULL_UP)
+
 fun main(args: Array<String>) {
     GpioFactory.setDefaultProvider(RaspiGpioProvider(RaspiPinNumberingScheme.DEFAULT_PIN_NUMBERING))
     setupLedAndSingleButton()
     initButtons()
-
     runApplication<WhackitApplication>(*args)
 }
 
@@ -34,23 +38,16 @@ private fun setupLedAndSingleButton() {
 }
 
 fun findButton() {
-    val state24 = (gpio.getProvisionedPin(GPIO_24) as GpioPinDigital).state.isHigh
-    val state25 = (gpio.getProvisionedPin(GPIO_25) as GpioPinDigital).state.isHigh
-    unprovisionButtons()
-    gpio.provisionDigitalOutputPin(GPIO_24, "MyLED 24", PinState.HIGH);
-    gpio.provisionDigitalOutputPin(GPIO_25, "MyLED 25", PinState.HIGH);
-    val state28 = gpio.provisionDigitalInputPin(GPIO_28, PinPullResistance.PULL_DOWN).isHigh
-    val state23 = gpio.provisionDigitalInputPin(GPIO_23, PinPullResistance.PULL_DOWN).isHigh
-    val button = getButton(state28, state23, state24, state25)
-    LOG.info("  yYOU PRESSED:  $button")
-    initButtons()
-}
+    listOf(pin24, pin25).forEach { it.removeAllListeners() }
 
-private fun unprovisionButtons() {
-    val buttonArrayPins = listOf(gpio.getProvisionedPin(GPIO_28), gpio.getProvisionedPin(GPIO_23), gpio.getProvisionedPin(GPIO_24), gpio.getProvisionedPin(GPIO_25)).filterNotNull().toTypedArray()
-    if (buttonArrayPins.isNotEmpty()) {
-        gpio.unprovisionPin(*buttonArrayPins)
-    }
+    val state24 = pin24.state.isHigh
+    val state25 = pin25.state.isHigh
+    setReadState()
+    val state28 = pin28.isHigh
+    val state23 = pin23.isHigh
+    val button = getButton(state28, state23, state24, state25)
+    LOG.info("  YOU PRESSED:  $button")
+    initButtons()
 }
 
 fun getButton(state28: Boolean, state23: Boolean, state24: Boolean, state25: Boolean): String {
@@ -61,16 +58,23 @@ fun getButton(state28: Boolean, state23: Boolean, state24: Boolean, state25: Boo
         !state23 && !state24 && state25 && state28 -> "LOWER RIGHT"
         state23 && !state24 && !state25 && state28 -> "HM1"
         !state23 && state24 && state25 && !state28 -> "HM2"
-        !state23 && !state24 && !state25 && !state28 -> "HM3"
+        !state23 && !state24 && !state25 && !state28 -> "YOU LET GO - KEEP PRESSING"
         else -> "UNKNOWN"
     }
 }
 
 private fun initButtons() {
-    unprovisionButtons()
-    gpio.provisionDigitalOutputPin(GPIO_28, "MyLED 28", PinState.HIGH);
-    gpio.provisionDigitalOutputPin(GPIO_23, "MyLED 23", PinState.HIGH);
-    listOf(GPIO_24, GPIO_25).map { gpio.provisionDigitalInputPin(it, PinPullResistance.PULL_DOWN) }.forEach {
+    pin28.mode = PinMode.DIGITAL_OUTPUT
+    pin23.mode = PinMode.DIGITAL_OUTPUT
+    pin28.state = PinState.HIGH
+    pin23.state = PinState.HIGH
+
+    pin24.mode = PinMode.DIGITAL_INPUT
+    pin25.mode = PinMode.DIGITAL_INPUT
+    pin24.pullResistance = PinPullResistance.PULL_UP
+    pin25.pullResistance = PinPullResistance.PULL_UP
+
+    listOf(pin24, pin25).forEach {
         it.addListener(GpioPinListenerDigital { event ->
             // display pin state on console
             LOG.trace(" DETECTED ARRAY PRESS  " + event.pin + " = " + event.state)
@@ -83,4 +87,17 @@ private fun initButtons() {
             }
         })
     }
+}
+
+private fun setReadState() {
+    pin24.mode = PinMode.DIGITAL_OUTPUT
+    pin25.mode = PinMode.DIGITAL_OUTPUT
+    pin24.state = PinState.HIGH
+    pin25.state = PinState.HIGH
+
+    pin28.mode = PinMode.DIGITAL_INPUT
+    pin23.mode = PinMode.DIGITAL_INPUT
+    pin23.pullResistance = PinPullResistance.PULL_UP
+    pin28.pullResistance = PinPullResistance.PULL_UP
+
 }
