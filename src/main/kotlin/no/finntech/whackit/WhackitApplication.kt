@@ -48,7 +48,9 @@ fun findButton() {
 
 private fun unprovisionButtons() {
     val buttonArrayPins = listOf(gpio.getProvisionedPin(GPIO_28), gpio.getProvisionedPin(GPIO_23), gpio.getProvisionedPin(GPIO_24), gpio.getProvisionedPin(GPIO_25)).filterNotNull().toTypedArray()
-    gpio.unprovisionPin(*buttonArrayPins)
+    if (buttonArrayPins.isNotEmpty()) {
+        gpio.unprovisionPin(*buttonArrayPins)
+    }
 }
 
 fun getButton(state28: Boolean, state23: Boolean, state24: Boolean, state25: Boolean): String {
