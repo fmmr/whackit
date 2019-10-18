@@ -25,42 +25,35 @@ fun main(args: Array<String>) {
     setupLedAndSingleButton()
 
 
-
-    while (true) {
-        pin28.state = PinState.LOW
-        if (pin24.state.isHigh) {
-            LOG.info("BUTTON PRESSED UPPER LEFT")
-            while(pin24.state.isHigh){
-                // do nothing
+    listOf(pin24, pin25).forEach {
+        it.addListener(GpioPinListenerDigital { event ->
+            // display pin state on console
+            if (event.state == PinState.HIGH) {
+                findButton(event.pin as GpioPinDigitalInput)
             }
-        }
-        if (pin25.state.isHigh) {
-            LOG.info("BUTTON PRESSED LOWER LEFT")
-            while(pin25.state.isHigh){
-                // do nothing
-            }
-        }
-        pin28.state = PinState.HIGH
-
-        pin23.state = PinState.LOW
-        if (pin24.state.isHigh) {
-            LOG.info("BUTTON PRESSED UPPER RIGHT")
-            while(pin24.state.isHigh){
-                // do nothing
-            }
-        }
-        if (pin25.state.isHigh) {
-            LOG.info("BUTTON PRESSED LOWER RIGHT")
-            while(pin25.state.isHigh){
-                // do nothing
-            }
-        }
-        pin23.state = PinState.HIGH
+        })
     }
+
+//    while (true) {
+//        findButton()
+//    }
 
 
 //    initButtons()
-//    runApplication<WhackitApplication>(*args)
+    runApplication<WhackitApplication>(*args)
+}
+
+private fun findButton(provisionedPin: GpioPinDigitalInput) {
+    listOf(pin28, pin23).forEach {
+        it.state = PinState.LOW
+        if (provisionedPin.state.isHigh) {
+            LOG.info("BUTTON PRESSED UPPER LEFT")  // XXX which button is derived from which pin28/23 and which provisionedPin 24/25 is "here"
+            while (provisionedPin.state.isHigh) {
+                // do nothing
+            }
+        }
+        it.state = PinState.HIGH
+    }
 }
 
 private fun setupLedAndSingleButton() {
