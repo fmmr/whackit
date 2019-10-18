@@ -29,7 +29,7 @@ private fun setupLedAndSingleButton() {
     val input = gpio.provisionDigitalInputPin(GPIO_01, PinPullResistance.PULL_DOWN)
     input.addListener(GpioPinListenerDigital { event ->
         // display pin state on console
-        println(" --> GPIO PIN STATE CHANGE: " + event.pin + " = " + event.state)
+        LOG.info(" --> GPIO PIN STATE CHANGE: " + event.pin + " = " + event.state)
     })
 }
 
@@ -42,7 +42,7 @@ fun findButton() {
     val state28 = gpio.provisionDigitalInputPin(GPIO_28, PinPullResistance.PULL_DOWN).isHigh
     val state23 = gpio.provisionDigitalInputPin(GPIO_23, PinPullResistance.PULL_DOWN).isHigh
     val button = getButton(state28, state23, state24, state25)
-    println("  yYOU PRESSED:  $button")
+    LOG.info("  yYOU PRESSED:  $button")
     initButtons()
 }
 
@@ -73,7 +73,7 @@ private fun initButtons() {
     listOf(GPIO_24, GPIO_25).map { gpio.provisionDigitalInputPin(it, PinPullResistance.PULL_DOWN) }.forEach {
         it.addListener(GpioPinListenerDigital { event ->
             // display pin state on console
-            println(" DETECTED ARRAY PRESS  " + event.pin + " = " + event.state)
+            LOG.trace(" DETECTED ARRAY PRESS  " + event.pin + " = " + event.state)
             if (event.state == PinState.HIGH) {
                 try {
                     findButton()
