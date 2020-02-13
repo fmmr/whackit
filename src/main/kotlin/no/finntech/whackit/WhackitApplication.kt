@@ -8,7 +8,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 
-@SpringBootApplication
 class WhackitApplication
 
 val gpio = GpioFactory.getInstance()
