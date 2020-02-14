@@ -4,11 +4,13 @@ import com.pi4j.io.gpio.GpioFactory
 import com.pi4j.io.gpio.RaspiGpioProvider
 import com.pi4j.io.gpio.RaspiPinNumberingScheme
 import com.pi4j.io.i2c.I2CBus
+import com.pi4j.io.i2c.I2CDevice
 import com.pi4j.io.i2c.I2CFactory
 import com.pi4j.util.Console
 
 
-val gpio = GpioFactory.getInstance()
+const val ADR_PLAYER_1 = 0x3E
+
 const val reg_reset = 0x7D
 const val reg_clock = 0x1E
 const val reg_dira = 0X0F // dir a
@@ -22,23 +24,33 @@ const val reg_debounce_enabled_b = 0x23
 const val reg_keydata_1 = 0x27
 const val reg_keydata_2 = 0x28
 
+// handy doc
 // https://pinout.xyz/pinout/wiringpi
 // https://github.com/topherCantrell/pi-io-expander/blob/84f53abdeb499959c21ed52f7d8415977fbef23b/src/hardware_scan_main.py
 // https://github.com/topherCantrell/pi-io-expander/blob/84f53abdeb499959c21ed52f7d8415977fbef23b/src/SX1509.py
 // https://cdn.sparkfun.com/datasheets/BreakoutBoards/sx1509.pdf
+
 fun main(args: Array<String>) {
-    GpioFactory.setDefaultProvider(RaspiGpioProvider(RaspiPinNumberingScheme.DEFAULT_PIN_NUMBERING))
-
-    val PLAYER_1 = 0x3E
-
     val console = Console()
-
-
     console.title("<-- The Pi4J Project -->", "I2C Example")
     console.promptForExit()
-    val i2c = I2CFactory.getInstance(I2CBus.BUS_1)
 
-    val device = i2c.getDevice(PLAYER_1)
+    val i2c = I2CFactory.getInstance(I2CBus.BUS_1)
+    val player1 = setupDevice(i2c, ADR_PLAYER_1)
+
+    while (true) {
+        val a = player1.read(reg_keydata_1)
+        val b = player1.read(reg_keydata_2)
+        if (a != 255 && b != 255) {  // at least one button is pressed
+            println("a: $a")
+            println("b: $b")
+
+        }
+    }
+}
+
+private fun setupDevice(i2c: I2CBus, address: Int): I2CDevice {
+    val device = i2c.getDevice(address)
     device.write(reg_reset, 0x12)
     device.write(reg_reset, 0x34)
     Thread.sleep(100)
@@ -52,15 +64,6 @@ fun main(args: Array<String>) {
     //  FMR: don't think this is used:
     device.write(reg_key_config_1, 0b00000100) //
     device.write(reg_key_config_2, 0b00001001) // RegKeyConfig2
-    console.println("device set up")
-
-    while (true) {
-        val a = device.read(reg_keydata_1)
-        val b = device.read(reg_keydata_2)
-        if (a != 255 && b != 255) {  // at least one button is pressed
-            println("a: $a")
-            println("b: $b")
-
-        }
-    }
+    println("device $device set up")
+    return device
 }
