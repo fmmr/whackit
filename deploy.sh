@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 mvn clean install
 echo "upload to pi"
-scp target/whackit-0.0.1-SNAPSHOT.jar pi@whackit:~/whackit/whackit.jar
+scp target/whackit-0.0.1-SNAPSHOT-jar-with-dependencies.jar pi@whackit:~/whackit/whackit.jar
 echo "kill existing"
 ssh pi@whackit 'sudo killall java'
 echo "exec whackit.jar"
