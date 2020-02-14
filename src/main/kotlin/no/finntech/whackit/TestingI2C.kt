@@ -11,71 +11,56 @@ import com.pi4j.util.Console
 val gpio = GpioFactory.getInstance()
 const val reg_reset = 0x7D
 const val reg_clock = 0x1E
-const val SX_RegDirA = 0x0F // # Data direction ...
 const val reg_dira = 0X0F // dir a
 const val reg_dirb = 0x0E // dir b
-val reg_open_drains_a = 0x0B
-val reg_pull_up_b = 0x06
-val RegDebounceConfig = 0x22
-val RegKeyConfig1 = 0x25
-val RegDebounceEnableB = 0x23
+const val reg_open_drains_a = 0x0B
+const val reg_pull_up_b = 0x06
+const val reg_debounce_config = 0x22
+const val reg_key_config_1 = 0x25
+const val reg_key_config_2 = 0x26
+const val reg_debounce_enabled_b = 0x23
+const val reg_keydata_1 = 0x27
+const val reg_keydata_2 = 0x28
 
 // https://pinout.xyz/pinout/wiringpi
+// https://github.com/topherCantrell/pi-io-expander/blob/84f53abdeb499959c21ed52f7d8415977fbef23b/src/hardware_scan_main.py
+// https://github.com/topherCantrell/pi-io-expander/blob/84f53abdeb499959c21ed52f7d8415977fbef23b/src/SX1509.py
+// https://cdn.sparkfun.com/datasheets/BreakoutBoards/sx1509.pdf
 fun main(args: Array<String>) {
     GpioFactory.setDefaultProvider(RaspiGpioProvider(RaspiPinNumberingScheme.DEFAULT_PIN_NUMBERING))
 
-    val PLAYER_1 = 0x3E;
+    val PLAYER_1 = 0x3E
 
     val console = Console()
 
 
-    console.title("<-- The Pi4J Project -->", "I2C Example");
-    console.promptForExit();
+    console.title("<-- The Pi4J Project -->", "I2C Example")
+    console.promptForExit()
     val i2c = I2CFactory.getInstance(I2CBus.BUS_1)
 
     val device = i2c.getDevice(PLAYER_1)
-
     device.write(reg_reset, 0x12)
     device.write(reg_reset, 0x34)
     Thread.sleep(100)
-
     device.write(reg_clock, 0b01000000)  // internal 2 MHz clock scan
-
-
     device.write(reg_dira, -0b01110000) // Lower 4 pins are outputs
     device.write(reg_open_drains_a, 0b00001111)
-
-    device.write(reg_dirb, -0b01110111) // Lower 4 pins are outputs
-    device.write(reg_pull_up_b, -0b01110111) // Lower 4 pins are outputs
-
-
-    device.write(RegDebounceConfig, 0b00000011) // Lower 4 pins are outputs
-
-    device.write(RegDebounceEnableB, -0b01110111) // Lower 4 pins are outputs
-    device.write(RegKeyConfig1, 0b00000100) // Lower 4 pins are outputs
-    device.write(0x26, 0b00001001) // Lower 4 pins are outputs
-    println("device set up")
-
+    device.write(reg_dirb, -0b01110111)
+    device.write(reg_pull_up_b, -0b01110111)
+    device.write(reg_debounce_config, 0b00000011)
+    device.write(reg_debounce_enabled_b, -0b01110111)
+    //  FMR: don't think this is used:
+    device.write(reg_key_config_1, 0b00000100) //
+    device.write(reg_key_config_2, 0b00001001) // RegKeyConfig2
+    console.println("device set up")
 
     while (true) {
-        val a = device.read(0x27)
-        val b = device.read(0x28)
-        if (a != 255 && b != 255) {
+        val a = device.read(reg_keydata_1)
+        val b = device.read(reg_keydata_2)
+        if (a != 255 && b != 255) {  // at least one button is pressed
             println("a: $a")
             println("b: $b")
 
         }
     }
-    //while True:
-    //r,c = io.get_keyboard_row_col()
-    //a = io.read_register(0x27)
-    //b = io.read_register(0x28)
-//
-    //if r!=0 and c!=0 and a!=255 and b!=255:
-    //print("Pressed "+KEYMAP[str(r)+str(c)])
-    //print("A: {0:b}".format(a))
-    //print("B: {0:b}".format(b))
-//
-    //time.sleep(.03)
-
 }
